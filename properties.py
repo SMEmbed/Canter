@@ -1,7 +1,7 @@
 import json
 def dump_to_json(pipeline, json_file='props.json'):
     elements = {}
-    for element in pipeline.children:
+    for element in reversed(pipeline.children):
         current_element = {}
         for prop in element.props:
             if 'Gst' in prop.value_type.name:
@@ -11,7 +11,7 @@ def dump_to_json(pipeline, json_file='props.json'):
         elements[element.name] = current_element
     print(elements)
     with open(json_file, 'w') as f:
-        json.dump(elements, f, sort_keys=True, indent=4)
+        json.dump(elements, f, indent=4)
 
 
 def load_from_json(pipeline, json_file='props.json'):
