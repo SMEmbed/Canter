@@ -33,8 +33,10 @@ def gprop_to_json(gprop, default_value):
     basic_prop = {'default' : default_value}
     if 'int' in gprop_type:
         basic_prop['type'] = 'number'
+        basic_prop['maximum'] = gprop.maximum
+        basic_prop['minimum'] = gprop.minimum
     elif 'gboolean' == gprop_type:
-        basic_prop['type'] = 'bool'
+        basic_prop['type'] = 'boolean'
     elif 'char' in gprop_type:
         basic_prop['type'] = 'string'
     elif hasattr(gprop, 'enum_class'):
@@ -43,7 +45,7 @@ def gprop_to_json(gprop, default_value):
         basic_prop['type'] = 'string'
         basic_prop['default'] = default_value.value_nick
     else:
-        print('cant analyze tpye: ', gprop_type)
+        print('cant analyze type: ', gprop_type, gprop.name)
         return None
     return basic_prop
 
@@ -52,8 +54,7 @@ def dump_to_json_schema(pipeline, json_file='props_schema.json'):
     for element in reversed(pipeline.children):
         current_element = {'type' : 'object', 'properties' : {}}
         for prop in element.props:
-            if False and 'Gst' in prop.value_type.name:
-                print(prop.value_type.name)
+            if prop.name == 'name':
                 continue
             if prop.flags & 2:
                 json_serialized = gprop_to_json(prop, getattr(element.props, prop.name))
