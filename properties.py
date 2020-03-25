@@ -28,28 +28,37 @@ def dump_to_json(pipeline, json_file='props.json'):
     with open(json_file, 'w') as f:
         json.dump(elements, f, indent=4)
 
-def gprop_to_json_type(gprop_type):
+def gprop_to_json(gprop, default_value):
+    gprop_type = gprop.value_type.name
+    basic_prop = {'default' : default_value}
     if 'int' in gprop_type:
-        return 'number'
+        basic_prop['type'] = 'number'
     elif 'gboolean' == gprop_type:
-        return 'bool'
+        basic_prop['type'] = 'bool'
     elif 'char' in gprop_type:
-        return 'string'
-    print(gprop_type)
-    return None
+        basic_prop['type'] = 'string'
+    elif hasattr(gprop, 'enum_class'):
+        enum_options = gprop.enum_class.__enum_values__.values()
+        basic_prop['enum'] = [x.value_nick for x in enum_options]
+        basic_prop['type'] = 'string'
+        basic_prop['default'] = default_value.value_nick
+    else:
+        print('cant analyze tpye: ', gprop_type)
+        return None
+    return basic_prop
 
 def dump_to_json_schema(pipeline, json_file='props_schema.json'):
     elements = {}
     for element in reversed(pipeline.children):
         current_element = {'type' : 'object', 'properties' : {}}
         for prop in element.props:
-            if 'Gst' in prop.value_type.name:
+            if False and 'Gst' in prop.value_type.name:
                 print(prop.value_type.name)
                 continue
             if prop.flags & 2:
-                current_element['properties'][prop.name] =  {
-                        'type' : gprop_to_json_type(prop.value_type.name), 
-                        'default' : getattr(element.props, prop.name)}
+                json_serialized = gprop_to_json(prop, getattr(element.props, prop.name))
+                if json_serialized:
+                    current_element['properties'][prop.name] = json_serialized
         elements[element.name] = current_element
 
     print(elements)
