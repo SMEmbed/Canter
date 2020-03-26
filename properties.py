@@ -40,9 +40,15 @@ def dump_to_json(pipeline, json_file='props.json'):
     with open(json_file, 'w') as f:
         json.dump(elements, f, indent=4)
 
-def gprop_to_json(gprop, default_value):
+def gprop_default_value(gprop):
+    value = gprop.default_value
+    if hasattr(gprop, 'enum_class'):
+        value = value.value_nick
+    return value
+
+def gprop_to_json(gprop):
     gprop_type = gprop.value_type.name
-    basic_prop = {'default' : default_value}
+    basic_prop = {'default' : gprop_default_value(gprop)}
     if 'gboolean' == gprop_type:
         basic_prop['type'] = 'boolean'
     elif 'gfloat' == gprop_type:
@@ -56,7 +62,6 @@ def gprop_to_json(gprop, default_value):
         enum_options = gprop.enum_class.__enum_values__.values()
         basic_prop['enum'] = [x.value_nick for x in enum_options]
         basic_prop['type'] = 'string'
-        basic_prop['default'] = default_value.value_nick
     elif 'int' in gprop_type:
         basic_prop['type'] = 'integer'
         basic_prop['maximum'] = gprop.maximum
@@ -74,10 +79,11 @@ def dump_to_json_schema(pipeline, json_file='props_schema.json'):
             if prop.name == 'name':
                 continue
             if prop.flags & GObject.ParamFlags.WRITABLE:
-                json_serialized_prop = gprop_to_json(prop, getattr(element.props, prop.name))
+                json_serialized_prop = gprop_to_json(prop)
                 if json_serialized_prop:
                     current_element['properties'][prop.name] = json_serialized_prop
-            #TODO also write readonly properties
+            else:
+                current_element['properties'][prop.name] = {'const': gprop_default_value(prop)}
         elements[element.name] = current_element
 
     schema = {'type' : 'object', 'properties' : elements}

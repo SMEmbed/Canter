@@ -21,7 +21,7 @@ def bus_call(bus, message, loop):
     return True
 
 Gst.init(None)
-pipeline = Gst.parse_launch('videotestsrc ! x264enc ! autovideosink')
+pipeline = Gst.parse_launch('videotestsrc ! x264enc ! fakesink')
 
 loop = GLib.MainLoop()
 bus = pipeline.get_bus()
