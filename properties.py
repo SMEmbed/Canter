@@ -15,7 +15,7 @@ def load_from_json(pipeline, json_file='props.json', schema_file='props_schema.j
         jsonschema.validate(properties, schema)
     except jsonschema.exceptions.ValidationError as e:
         print('not matching to schema', e)
-        return
+        return False
 
     for element in pipeline.children:
         for prop in element.props:
@@ -24,6 +24,7 @@ def load_from_json(pipeline, json_file='props.json', schema_file='props_schema.j
             except KeyError:
                 continue
             setattr(element.props, prop.name, json_config)
+    return True
 
 def dump_to_json(pipeline, json_file='props.json'):
     elements = {}
@@ -44,15 +45,20 @@ def gprop_to_json(gprop, default_value):
     basic_prop = {'default' : default_value}
     if 'gboolean' == gprop_type:
         basic_prop['type'] = 'boolean'
+    elif 'gfloat' == gprop_type:
+        basic_prop['type'] = 'number'
+        basic_prop['maximum'] = gprop.maximum
+        basic_prop['minimum'] = gprop.minimum
+    elif 'gchararray' == gprop_type:
+        basic_prop['type'] = 'string'
+        #TODO check if there is length limit
     elif hasattr(gprop, 'enum_class'):
         enum_options = gprop.enum_class.__enum_values__.values()
         basic_prop['enum'] = [x.value_nick for x in enum_options]
         basic_prop['type'] = 'string'
         basic_prop['default'] = default_value.value_nick
-    elif 'gchararray' == gprop_type:
-        basic_prop['type'] = 'string'
     elif 'int' in gprop_type:
-        basic_prop['type'] = 'number'
+        basic_prop['type'] = 'integer'
         basic_prop['maximum'] = gprop.maximum
         basic_prop['minimum'] = gprop.minimum
     else:
@@ -71,6 +77,7 @@ def dump_to_json_schema(pipeline, json_file='props_schema.json'):
                 json_serialized_prop = gprop_to_json(prop, getattr(element.props, prop.name))
                 if json_serialized_prop:
                     current_element['properties'][prop.name] = json_serialized_prop
+            #TODO also write readonly properties
         elements[element.name] = current_element
 
     schema = {'type' : 'object', 'properties' : elements}

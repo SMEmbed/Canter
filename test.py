@@ -21,7 +21,7 @@ def bus_call(bus, message, loop):
     return True
 
 Gst.init(None)
-pipeline = Gst.parse_launch('videotestsrc ! autovideosink')
+pipeline = Gst.parse_launch('videotestsrc ! x264enc ! autovideosink')
 
 loop = GLib.MainLoop()
 bus = pipeline.get_bus()
@@ -29,12 +29,12 @@ bus.add_signal_watch()
 bus.connect ("message", bus_call, loop)
 
 element = pipeline.children[1]
-element.props.num_buffers = 20
+#element.props.num_buffers = 20
 properties.dump_to_json_schema(pipeline)
 properties.load_from_json(pipeline)
 pipeline.set_state(Gst.State.PLAYING)
 
-loop.run()
+#loop.run()
 #When the process finishes, the pipeline stops
 import time
 time.sleep(1)
