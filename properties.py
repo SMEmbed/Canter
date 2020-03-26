@@ -26,17 +26,20 @@ def load_from_json(pipeline, json_file='props.json', schema_file='props_schema.j
             setattr(element.props, prop.name, json_config)
     return True
 
-def dump_to_json(pipeline, json_file='props.json'):
+def dump_to_json(pipeline, json_file='props_defaults.json'):
     elements = {}
     for element in reversed(pipeline.children):
         current_element = {}
+
         for prop in element.props:
-            if 'Gst' in prop.value_type.name:
+            if prop.name == 'name':
                 continue
-            current_element[prop.name] =  [prop.flags, 
-                                    prop.value_type.name, getattr(element.props, prop.name)]
+            if not is_gprop_valid_type(prop):
+                continue
+            current_element[prop.name] =  gprop_default_value(prop)
+
         elements[element.name] = current_element
-    print(elements)
+
     with open(json_file, 'w') as f:
         json.dump(elements, f, indent=4)
 
@@ -45,6 +48,16 @@ def gprop_default_value(gprop):
     if hasattr(gprop, 'enum_class'):
         value = value.value_nick
     return value
+
+def is_gprop_valid_type(gprop):
+    gprop_type = gprop.value_type.name
+    if gprop_type in ['gboolean', 'gfloat', 'gchararray']:
+        return True
+    elif 'int' in gprop_type:
+        return True
+    elif hasattr(gprop, 'enum_class'):
+        return True
+    return False
 
 def gprop_to_json(gprop):
     gprop_type = gprop.value_type.name
@@ -82,7 +95,7 @@ def dump_to_json_schema(pipeline, json_file='props_schema.json'):
                 json_serialized_prop = gprop_to_json(prop)
                 if json_serialized_prop:
                     current_element['properties'][prop.name] = json_serialized_prop
-            else:
+            elif is_gprop_valid_type(prop):
                 current_element['properties'][prop.name] = {'const': gprop_default_value(prop)}
         elements[element.name] = current_element
 
