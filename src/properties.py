@@ -88,15 +88,18 @@ def dump_to_json_schema(pipeline, json_file='props_schema.json'):
     elements = {}
     for element in reversed(pipeline.children):
         current_element = {'type' : 'object', 'properties' : {}}
+
         for prop in element.props:
             if prop.name == 'name':
                 continue
+
             if prop.flags & GObject.ParamFlags.WRITABLE:
                 json_serialized_prop = gprop_to_json(prop)
                 if json_serialized_prop:
                     current_element['properties'][prop.name] = json_serialized_prop
             elif is_gprop_valid_type(prop):
                 current_element['properties'][prop.name] = {'const': gprop_default_value(prop)}
+
         elements[element.name] = current_element
 
     schema = {'type' : 'object', 'properties' : elements}
