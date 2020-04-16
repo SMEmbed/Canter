@@ -1,0 +1,15 @@
+name: canter
+
+channels:
+    - conda-forge
+    - defaults
+    - sbugallo # Working on adding gst-plugins-ugly to conda forge and removing this channel
+
+dependencies:
+    - python>=3
+    - gstreamer
+    - gst-plugins-base
+    - gst-plugins-good
+    - gst-plugins-ugly
+    - pygobject
+    - jsonschema
