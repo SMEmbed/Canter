@@ -1,15 +1,16 @@
 #!/usr/bin/env python
 import sys
+import os
 
 import gi
 gi.require_version('Gst', '1.0')
 from gi.repository import GObject, Gst, GLib
 
-import properties
+from . import properties
 
 
 class Pipeline():
-    def __init__(self, pipeline_str, json_file):
+    def __init__(self, pipeline_str, json_file=None):
         Gst.init(None)
         pipeline = Gst.parse_launch(pipeline_str)
 
@@ -17,7 +18,8 @@ class Pipeline():
 
         self.schema_file = 'pipeline_schema.json'
         properties.dump_to_json_schema(pipeline, self.schema_file)
-        properties.load_from_json(pipeline, json_file, self.schema_file)
+        if json_file and os.path.isfile(json_file):
+            properties.load_from_json(pipeline, json_file, self.schema_file)
 
         self.pipeline = pipeline
         bus = pipeline.get_bus()
